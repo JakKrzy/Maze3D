@@ -7,7 +7,6 @@ int main(int argc, char *argv[])
    MyWin win;
    win.Init(1600, 900, "Maze", 0, 33);
    glEnable(GL_CULL_FACE);
-   glEnable(GL_DEPTH_TEST);
    glDepthFunc(GL_LESS);
    glEnable(GL_LINE_SMOOTH);
    glLineWidth(2.0);

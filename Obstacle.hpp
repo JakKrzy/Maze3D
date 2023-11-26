@@ -8,6 +8,7 @@
 #include <array>
 #include <GLFW/glfw3.h> 
 #include <glm/gtc/type_ptr.hpp>
+#include <algorithm>
 
 class Obstacle : public AGLDrawable {
 public:
@@ -19,12 +20,8 @@ public:
         setCenter(_center);
         setAngles(angles.x, angles.y, angles.z);
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, center);
-        model = glm::rotate(model, glm::radians(x_angle), {1.0, 0.0, 0.0});
-        model = glm::rotate(model, glm::radians(y_angle), {0.0, 1.0, 0.0});
-        model = glm::rotate(model, glm::radians(z_angle), {0.0, 0.0, 1.0});
-        model = glm::scale(model, {scale, scale, scale});
+        calcModelMatrix();
+        calcVertices();
     }
 
     void setAngles(const float x, const float y, const float z)
@@ -40,9 +37,30 @@ public:
         color = {0.4*center.x+0.6, 0.01*center.y, 0.5*center.z+0.7};
 
     }
+
+    void calcModelMatrix()
+    {
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, center);
+        model = glm::rotate(model, glm::radians(x_angle), {1.0, 0.0, 0.0});
+        model = glm::rotate(model, glm::radians(y_angle), {0.0, 1.0, 0.0});
+        model = glm::rotate(model, glm::radians(z_angle), {0.0, 0.0, 1.0});
+        model = glm::scale(model, {scale, scale, scale});
+    }
+
+    void calcVertices()
+    {
+        for (auto& v : vertices)
+        {
+            auto u = model * glm::vec4(v, 1.0);
+            v.x = u.x;
+            v.y = u.y;
+            v.z = u.z;
+        }
+    }
     // void setScale(const int gridSize) { scale = 1.0 / (1.2 * gridSize); }
 
-    virtual void setShaders() { compileShadersFromFile("Obstacle.vesh", "Obstacle.frsh"); }
+    void setShaders() { compileShadersFromFile("Obstacle.vesh", "Obstacle.frsh"); }
     
     void setBuffers()
     {
@@ -92,5 +110,12 @@ public:
     glm::mat4 model;
     glm::vec3 color{1.0, 1.0, 1.0};
     glm::vec3 center{0.0, 0.0, 0.0};
+    std::array<glm::vec3, 6> vertices{
+        glm::vec3{-1.0f, -1.0f, -1.0f},
+        glm::vec3{-1.0f,  1.0f,  1.0f},
+        glm::vec3{ 1.0f,  1.0f, -1.0f},
+        glm::vec3{ 1.0f, -1.0f,  1.0f},
+        glm::vec3{-1.0f, -1.0f, -1.0f},
+        glm::vec3{-1.0f,  1.0f,  1.0f}};
     bool isFirstDraw{true};
 };

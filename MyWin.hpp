@@ -50,11 +50,17 @@ public:
 
 
         startTime = std::chrono::system_clock::now();
+        glm::vec3 minimapCameraPos{-3.0, -3.0, -3.0};
 
         auto radius = 3.0f;
         do {
+            glEnable(GL_DEPTH_TEST);
+            glLineWidth(2.0f);
             glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            AGLErrors("main-loopbegin");
+            glViewport(0, 0, wd, ht);
+
+            player.catchCamKey();
+            player.catchMoveKey();
 
             auto view{player.getViewMatrix()};
             for (auto& o : obstacles) 
@@ -65,10 +71,27 @@ public:
                 o->draw(view, true);
             }
 
-            player.catchCamKey();
-            player.catchMoveKey();
+            auto p = player.getCenter();
+            minimapCameraPos = {
+                p.x > 0.0f ? 3.0f : -3.0f,
+                p.y > 0.0f ? 3.0f : -3.0f,
+                p.z > 0.0f ? 3.0f : -3.0f};
 
-            AGLErrors("main-afterdraw");
+            auto minimapView = glm::lookAt(
+                minimapCameraPos,
+                glm::vec3{0.0f, 0.0f, 0.0f},
+                glm::vec3{0.0f, 1.0f, 0.0f});
+            glViewport(2*(wd/3), 0, wd/3, ht/3);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            glLineWidth(0.7f);
+            for (auto& o : obstacles)
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                o->draw(minimapView);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                player.draw(minimapView);
+            }
+
             glfwSwapBuffers(win());
             glfwPollEvents();
         } while (glfwGetKey(win(), GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
