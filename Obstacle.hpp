@@ -84,9 +84,10 @@ public:
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
         AGLErrors("Obstacle-draw");
     }
+
 // protected:
 
-    float scale{1.0/16};
+    float scale{1.0/18};
     float x_angle{0.0}, y_angle{0.0}, z_angle{0.0};
     glm::mat4 model;
     glm::vec3 color{1.0, 1.0, 1.0};

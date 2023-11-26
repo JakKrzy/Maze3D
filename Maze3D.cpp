@@ -2,18 +2,16 @@
 #include <stdio.h>
 #include "MyWin.hpp"
 
-void windowSizeCallback(GLFWwindow* win, int width, int height)
+int main(int argc, char *argv[])
 {
-   int minSize{std::min(width, height)};
-   int xOffset{(width - minSize)/2};
-   int yOffset{(height - minSize)/2};
-   glViewport(xOffset, yOffset, minSize, minSize);
-}
-
-int main(int argc, char *argv[]) {
    MyWin win;
-   win.Init(1024, 768, "Maze", 0, 33);
-   glfwSetWindowSizeCallback(win.win(), windowSizeCallback);
+   win.Init(1600, 900, "Maze", 0, 33);
+   glEnable(GL_CULL_FACE);
+   glEnable(GL_DEPTH_TEST);
+   glDepthFunc(GL_LESS);
+   glEnable(GL_LINE_SMOOTH);
+   glLineWidth(2.0);
+   
    if (argc > 1)
    {
       if (argc > 2)

@@ -8,7 +8,6 @@
 #include "Obstacle.hpp"
 #include "Player.hpp"
 
-
 class MyWin : public AGLWindow {
 public:
     MyWin() {};
@@ -19,12 +18,11 @@ public:
     {
         srand(seed);
         ViewportOne(0, 0, wd, ht);
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
-        glEnable(GL_LINE_SMOOTH);
-        glLineWidth(2.0);
+        glfwSetWindowSizeCallback(win(), MyWin::windowSizeCallback);
+        glfwSetInputMode(win(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+        Player player(win());
+        glfwSetCursorPosCallback(win(), Player::mouseCallback);
 
         std::vector<std::shared_ptr<Obstacle>> obstacles;
         obstacles.reserve(N*N*N);
@@ -50,7 +48,6 @@ public:
             curr_x += diff;
         }
 
-        Player player(win());
 
         startTime = std::chrono::system_clock::now();
 
@@ -58,9 +55,7 @@ public:
         do {
             glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             AGLErrors("main-loopbegin");
-            // player.cameraPos.x = sin(glfwGetTime()) * radius;
-            // player.cameraPos.y = sin(glfwGetTime());
-            // player.cameraPos.z = cos(glfwGetTime()) * radius;
+
             auto view{player.getViewMatrix()};
             for (auto& o : obstacles) 
             {
@@ -95,6 +90,14 @@ public:
         printf("Your time (m:s:ms): %ld:%ld:%ld\n", timeMinutes.count(), timeSeconds.count(), timeMilliseconds.count());
     }
 
+    static void windowSizeCallback(GLFWwindow* win, int width, int height)
+    {
+       int minSize{std::min(width, height)};
+       int xOffset{(width - minSize)/2};
+       int yOffset{(height - minSize)/2};
+       glViewport(xOffset, yOffset, minSize, minSize);
+    }
+
 private:
-   std::chrono::time_point<std::chrono::system_clock> startTime;
+    std::chrono::time_point<std::chrono::system_clock> startTime;
 };
