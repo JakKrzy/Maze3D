@@ -12,14 +12,14 @@ class MyWin : public AGLWindow {
 public:
     MyWin() {};
     MyWin(int _wd, int _ht, const char *name, int vers, int fullscr=0)
-       : AGLWindow(_wd, _ht, name, vers, fullscr) {};
+       : AGLWindow(_wd, _ht, name, vers, fullscr) {}
     
     void MainLoop(int seed, const int N = 10)
     {
         srand(seed);
         ViewportOne(0, 0, wd, ht);
         glfwSetWindowSizeCallback(win(), MyWin::windowSizeCallback);
-        glfwSetInputMode(win(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(win(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
         Player player(win());
         glfwSetCursorPosCallback(win(), Player::mouseCallback);
@@ -74,7 +74,8 @@ public:
             auto p = player.getCenter();
             minimapCameraPos = {
                 p.x > 0.0f ? 3.0f : -3.0f,
-                p.y > 0.0f ? 3.0f : -3.0f,
+                // p.y > 0.0f ? 3.0f : -3.0f,
+                3.0f,
                 p.z > 0.0f ? 3.0f : -3.0f};
 
             auto minimapView = glm::lookAt(
@@ -115,10 +116,14 @@ public:
 
     static void windowSizeCallback(GLFWwindow* win, int width, int height)
     {
-       int minSize{std::min(width, height)};
-       int xOffset{(width - minSize)/2};
-       int yOffset{(height - minSize)/2};
-       glViewport(xOffset, yOffset, minSize, minSize);
+        void* ptr = glfwGetWindowUserPointer(win);
+        if (AGLWindow* window = static_cast<AGLWindow*>(ptr))
+        {
+            window->wd = width;
+            window->ht = height;
+            window->aspect = (float)width / (float)height;
+        }
+        glViewport(0, 0, width, height);
     }
 
 private:
