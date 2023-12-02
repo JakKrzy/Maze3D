@@ -12,11 +12,13 @@ class Player : AGLDrawable
     float deltaTime{0.0f}, lastFrameTime{0.0f};
     static float lastY, lastX;
     static constexpr float mouseSensitivity{0.1f};
+    std::vector<GLfloat> vertices;
+    float& aspect;
 public:
-    Player(GLFWwindow* _win) : AGLDrawable(0), win(_win)
+    Player(GLFWwindow* _win, float& _aspect) : AGLDrawable(0), win(_win), aspect(_aspect)
     {
         setShaders();
-        setBuffers();
+        setSphereBuffers();
     }
     glm::vec3 cameraPos{-1.0f, -1.0f, -1.0f};
     glm::vec3 cameraTarget{0.0f, 0.0f, -1.0f};
@@ -125,7 +127,7 @@ public:
         model = glm::scale(model, {scale, scale, scale});
 
         auto projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), 1024.0f / 768.0f, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
         glm::vec3 currColor{1.0, 1.0, 1.0};
 
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(model));
@@ -133,7 +135,114 @@ public:
         glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(projection));
         glUniform3f(4, currColor.x, currColor.y, currColor.z);
 
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
         AGLErrors("Player-draw");
+    }
+
+    // adapted from http://www.songho.ca/opengl/gl_sphere.html
+    void setSphereBuffers()
+    {
+        bindBuffers();
+        const float radius{1.0f};
+        const int sectorCount{24}, stackCount{16};
+        std::vector<GLfloat> sphereVerts;
+        
+        float x, y, z, xy;                              // vertex position
+        
+        float sectorStep = 2 * M_PI / sectorCount;
+        float stackStep = M_PI / stackCount;
+        float sectorAngle, stackAngle;  
+        
+        for(int i = 0; i <= stackCount; ++i)
+        {
+            stackAngle = M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
+            xy = radius * cosf(stackAngle);             // r * cos(u)
+            z = radius * sinf(stackAngle);              // r * sin(u)
+        
+            // add (sectorCount+1) vertices per stack
+            // first and last vertices have same position and normal, but different tex coords
+            for(int j = 0; j <= sectorCount; ++j)
+            {
+                sectorAngle = j * sectorStep;           // starting from 0 to 2pi
+        
+                // vertex position (x, y, z)
+                x = xy * cosf(sectorAngle);             // r * cos(u) * cos(v)
+                y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
+                sphereVerts.push_back(x);
+                sphereVerts.push_back(y);
+                sphereVerts.push_back(z);
+            }
+        }
+
+
+        auto getVertAt = [&sphereVerts](int i){
+            auto index = 3*i;
+            return glm::vec3(sphereVerts[index], sphereVerts[index+1], sphereVerts[index+2]);
+        };
+
+        // generate CCW index list of sphere triangles
+        // k1--k1+1
+        // |  / |
+        // | /  |
+        // k2--k2+1
+        int k1, k2;
+        for(int i = 0; i < stackCount; ++i)
+        {
+            k1 = i * (sectorCount + 1);     // beginning of current stack
+            k2 = k1 + sectorCount + 1;      // beginning of next stack
+
+            for(int j = 0; j < sectorCount; ++j, ++k1, ++k2)
+            {
+                // 2 triangles per sector excluding first and last stacks
+                // k1 => k2 => k1+1
+                if(i != 0)
+                {
+                    auto vert = getVertAt(k1);
+                    vertices.push_back(vert.x);
+                    vertices.push_back(vert.y);
+                    vertices.push_back(vert.z);
+
+                    vert = getVertAt(k2);
+                    vertices.push_back(vert.x);
+                    vertices.push_back(vert.y);
+                    vertices.push_back(vert.z);
+
+                    vert = getVertAt(k1 + 1);
+                    vertices.push_back(vert.x);
+                    vertices.push_back(vert.y);
+                    vertices.push_back(vert.z);
+                }
+
+                // k1+1 => k2 => k2+1
+                if(i != (stackCount-1))
+                {
+                    auto vert = getVertAt(k1 + 1);
+                    vertices.push_back(vert.x);
+                    vertices.push_back(vert.y);
+                    vertices.push_back(vert.z);
+
+                    vert = getVertAt(k2);
+                    vertices.push_back(vert.x);
+                    vertices.push_back(vert.y);
+                    vertices.push_back(vert.z);
+
+                    vert = getVertAt(k2 + 1);
+                    vertices.push_back(vert.x);
+                    vertices.push_back(vert.y);
+                    vertices.push_back(vert.z);
+                }
+            }
+        }
+
+        glBufferData(GL_ARRAY_BUFFER, vertices.size()*sizeof(float), vertices.data(), GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(
+            0,                  // attribute 0, must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,//24,             // stride
+            (void*)0);          // array buffer offset
+
     }
 };

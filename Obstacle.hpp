@@ -12,7 +12,8 @@
 
 class Obstacle : public AGLDrawable {
 public:
-    Obstacle(glm::vec3 _center, glm::vec3 angles) : AGLDrawable(0)
+    Obstacle(glm::vec3 _center, glm::vec3 angles, float& _aspect)
+        : AGLDrawable(0), aspect(_aspect)
     {
         setShaders();
         setBuffers();
@@ -90,7 +91,7 @@ public:
         bindBuffers();
 
         auto projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), 1024.0f / 768.0f, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
         glm::vec3 currColor{1.0, 1.0, 1.0};
 
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(model));
@@ -118,4 +119,5 @@ public:
         glm::vec3{-1.0f, -1.0f, -1.0f},
         glm::vec3{-1.0f,  1.0f,  1.0f}};
     bool isFirstDraw{true};
+    float& aspect;
 };

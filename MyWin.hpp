@@ -21,7 +21,7 @@ public:
         glfwSetWindowSizeCallback(win(), MyWin::windowSizeCallback);
         glfwSetInputMode(win(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-        Player player(win());
+        Player player(win(), aspect);
         glfwSetCursorPosCallback(win(), Player::mouseCallback);
 
         std::vector<std::shared_ptr<Obstacle>> obstacles;
@@ -39,7 +39,8 @@ public:
                 {
                     auto o = std::make_shared<Obstacle>(
                         glm::vec3(curr_x, curr_y, curr_z),
-                        glm::vec3(rand() % 360, rand() % 360, rand() % 360));
+                        glm::vec3(rand() % 360, rand() % 360, rand() % 360),
+                        aspect);
                     obstacles.push_back(o);
                     curr_z += diff;
                 }

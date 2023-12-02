@@ -18,5 +18,5 @@ void main(void) {
                                   vec4(1.0, 0.0, 0.0, 1.0),
                                   vec4(0.0, 1.0, 0.0, 1.0),
                                   vec4(0.0, 0.0, 1.0, 1.0));
-    vcolor = vec4(color, 1.0);
+    vcolor = colors[gl_VertexID % 6];
 }
