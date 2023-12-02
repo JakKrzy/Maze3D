@@ -2,6 +2,8 @@
 #include <glm/glm.hpp>
 #include "AGL3Window.hpp"
 #include "AGL3Drawable.hpp"
+#include "Obstacle.hpp"
+#include "ClosestPointTriangle.hpp"
 
 float lastMouseX, lastMouseY, cameraVerticalAngle{0.0f}, cameraHorizontalAngle{0.0f};
 bool mouseFirstMove{true};
@@ -10,10 +12,12 @@ class Player : AGLDrawable
 {
     GLFWwindow* win;
     float deltaTime{0.0f}, lastFrameTime{0.0f};
-    static float lastY, lastX;
     static constexpr float mouseSensitivity{0.1f};
     std::vector<GLfloat> vertices;
     float& aspect;
+    const float scale{1.0f/18};
+    const float radius{1.0f};
+
 public:
     Player(GLFWwindow* _win, float& _aspect) : AGLDrawable(0), win(_win), aspect(_aspect)
     {
@@ -58,16 +62,61 @@ public:
         }
     }
 
-    void catchMoveKey()
+    void catchMoveKey(std::vector<std::shared_ptr<Obstacle>> obstacles)
     {
         float currentFrame{glfwGetTime()};
         deltaTime = currentFrame - lastFrameTime;
         lastFrameTime = currentFrame;
         const float cameraSpeed = 0.8f * deltaTime;
         if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS)
+        {
             cameraPos += cameraSpeed * cameraTarget;
+            if (isCollision(obstacles))
+                cameraPos -= cameraSpeed * cameraTarget;
+        }
         if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
+        {
             cameraPos -= cameraSpeed * cameraTarget;
+            if (isCollision(obstacles))
+                cameraPos += cameraSpeed * cameraTarget;
+        }
+        checkOutOfBounds();
+    }
+
+    bool isCollision(std::vector<std::shared_ptr<Obstacle>> obstacles)
+    {
+        auto scaledRadius = scale * radius;
+        for (auto& obstacle : obstacles)
+        {
+            for (auto& triangle : obstacle->triangles)
+            {
+                auto closestPoint = closestPointTriangle(cameraPos, triangle[0], triangle[1], triangle[2]);
+                auto distance = glm::length(cameraPos - closestPoint);
+                if (distance <= scaledRadius)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    void checkOutOfBounds()
+    {
+        if (cameraPos.x > 1.0f)
+            cameraPos.x = 1.0f;
+        if (cameraPos.x < -1.0f)
+            cameraPos.x = -1.0f;
+        
+        if (cameraPos.y > 1.0f)
+            cameraPos.y = 1.0f;
+        if (cameraPos.y < -1.0f)
+            cameraPos.y = -1.0f;
+        
+        if (cameraPos.z > 1.0f)
+            cameraPos.z = 1.0f;
+        if (cameraPos.z < -1.0f)
+            cameraPos.z = -1.0f;
     }
 
     static void mouseCallback(GLFWwindow* win, double xpos, double ypos)
@@ -120,7 +169,6 @@ public:
         bindProgram();
         bindBuffers();
 
-        constexpr float scale{1.0f/18};
 
         auto model = glm::mat4(1.0f);
         model = glm::translate(model, cameraPos);
@@ -143,7 +191,6 @@ public:
     void setSphereBuffers()
     {
         bindBuffers();
-        const float radius{1.0f};
         const int sectorCount{24}, stackCount{16};
         std::vector<GLfloat> sphereVerts;
         

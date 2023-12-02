@@ -10,10 +10,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
 
+using Triangle = std::array<glm::vec3, 3>;
+
 class Obstacle : public AGLDrawable {
 public:
-    Obstacle(glm::vec3 _center, glm::vec3 angles, float& _aspect)
-        : AGLDrawable(0), aspect(_aspect)
+    Obstacle(glm::vec3 _center, glm::vec3 angles, float& _aspect, const glm::vec3& plPos)
+        : AGLDrawable(0), aspect(_aspect), playerPos(plPos)
     {
         setShaders();
         setBuffers();
@@ -58,6 +60,12 @@ public:
             v.y = u.y;
             v.z = u.z;
         }
+        for (auto i{0u}; i < 4; i++)
+        {
+            triangles[i][0] = vertices[i];
+            triangles[i][1] = vertices[(i + 1) % 4];
+            triangles[i][2] = vertices[(i + 2) % 4];
+        }
     }
     // void setScale(const int gridSize) { scale = 1.0 / (1.2 * gridSize); }
 
@@ -91,7 +99,7 @@ public:
         bindBuffers();
 
         auto projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(45.0f), aspect, 0.01f, 100.0f);
         glm::vec3 currColor{1.0, 1.0, 1.0};
 
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(model));
@@ -102,6 +110,11 @@ public:
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
         AGLErrors("Obstacle-draw");
+    }
+
+    float getDistanceFromPlayer()
+    {
+        return glm::length(center - playerPos);
     }
 
 // protected:
@@ -115,9 +128,9 @@ public:
         glm::vec3{-1.0f, -1.0f, -1.0f},
         glm::vec3{-1.0f,  1.0f,  1.0f},
         glm::vec3{ 1.0f,  1.0f, -1.0f},
-        glm::vec3{ 1.0f, -1.0f,  1.0f},
-        glm::vec3{-1.0f, -1.0f, -1.0f},
-        glm::vec3{-1.0f,  1.0f,  1.0f}};
+        glm::vec3{ 1.0f, -1.0f,  1.0f}};
+    std::array<Triangle, 4> triangles;
     bool isFirstDraw{true};
     float& aspect;
+    const glm::vec3& playerPos;
 };

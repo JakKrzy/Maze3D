@@ -37,11 +37,15 @@ public:
                 float curr_z{-1.0f + diff / 2};
                 for (int z_index{0}; z_index < N; z_index++)
                 {
-                    auto o = std::make_shared<Obstacle>(
-                        glm::vec3(curr_x, curr_y, curr_z),
-                        glm::vec3(rand() % 360, rand() % 360, rand() % 360),
-                        aspect);
-                    obstacles.push_back(o);
+                    if (not (x_index == 0 and y_index == 0 and z_index == 0))
+                    {
+                        auto o = std::make_shared<Obstacle>(
+                            glm::vec3(curr_x, curr_y, curr_z),
+                            glm::vec3(rand() % 360, rand() % 360, rand() % 360),
+                            aspect,
+                            player.cameraPos);
+                        obstacles.push_back(o);
+                    }
                     curr_z += diff;
                 }
                 curr_y += diff;
@@ -49,20 +53,33 @@ public:
             curr_x += diff;
         }
 
-
         startTime = std::chrono::system_clock::now();
         glm::vec3 minimapCameraPos{-3.0, -3.0, -3.0};
 
-        auto radius = 3.0f;
+        auto getClosestObstacles = [&obstacles](){
+            constexpr int numOfObstacles{9};
+            std::sort(
+                obstacles.begin(),
+                obstacles.end(),
+                [](std::shared_ptr<Obstacle> o1, std::shared_ptr<Obstacle> o2){
+                    return o1->getDistanceFromPlayer() < o2->getDistanceFromPlayer();
+                });
+            std::vector<std::shared_ptr<Obstacle>> res;
+            for (auto i{0u}; i < numOfObstacles; i++)
+                res.push_back(obstacles[i]);
+            return res;
+        };
+
         do {
             glEnable(GL_DEPTH_TEST);
             glLineWidth(2.0f);
             glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glViewport(0, 0, wd, ht);
-
+            
             player.catchCamKey();
-            player.catchMoveKey();
+            player.catchMoveKey(getClosestObstacles());
 
+            // Draw main view
             auto view{player.getViewMatrix()};
             for (auto& o : obstacles) 
             {
@@ -72,6 +89,7 @@ public:
                 o->draw(view, true);
             }
 
+            // Draw minimap
             auto p = player.getCenter();
             minimapCameraPos = {
                 p.x > 0.0f ? 3.0f : -3.0f,
@@ -102,7 +120,7 @@ public:
 
     void gameFinish()
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         auto endTime{std::chrono::system_clock::now()};
         auto timeMinutes{std::chrono::duration_cast<std::chrono::minutes>(endTime - startTime)};
         auto timeSeconds{

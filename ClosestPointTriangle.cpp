@@ -4,6 +4,7 @@
 // To find the distance, first one has to compute the closest point in triangle. The following code for finding the closest point in 3D triangle ABC to point P is taken from highly optimized Embree library:
 //
 // Vec3fa changed to glm::vec3    anl, 2023.10.31
+#include "ClosestPointTriangle.hpp"
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtx/io.hpp>
