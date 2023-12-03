@@ -24,8 +24,9 @@ public:
         float scale = 1.0f / (2 * (float)N);
 
         bool gameFinishFlag{false};
+        uint32_t itemNumber{0u};
 
-        Player player(win(), aspect, gameFinishFlag);
+        Player player(win(), aspect, gameFinishFlag, itemNumber);
         glfwSetCursorPosCallback(win(), Player::mouseCallback);
 
         std::vector<std::shared_ptr<Obstacle>> obstacles;
@@ -43,16 +44,29 @@ public:
                 {
                     if (not (x_index == 0 and y_index == 0 and z_index == 0))
                     {
-                        auto isFinish = x_index == N-1 and y_index == N-1 and z_index == N-1;
-                        auto isTrap = (rand() % 100) < 15;
+                        ObstacleType obstacleType;
+                        if (x_index == N-1 and y_index == N-1 and z_index == N-1)
+                            obstacleType = ObstacleType::finish;
+                        else
+                        {
+                            auto randomNum = rand() % 100;
+                            if (randomNum < 15)
+                                obstacleType = ObstacleType::trap;
+                            else if (randomNum < 30)
+                            {
+                                obstacleType = ObstacleType::item;
+                                itemNumber++;
+                            }
+                            else
+                                obstacleType = ObstacleType::normal;
+                        }
                         auto o = std::make_shared<Obstacle>(
                             glm::vec3(curr_x, curr_y, curr_z),
                             glm::vec3(rand() % 360, rand() % 360, rand() % 360),
                             scale,
                             aspect,
                             player.cameraPos,
-                            isTrap,
-                            isFinish);
+                            obstacleType);
                         obstacles.push_back(o);
                     }
                     curr_z += diff;

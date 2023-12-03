@@ -12,7 +12,7 @@
 
 using Triangle = std::array<glm::vec3, 3>;
 
-enum class 
+enum class ObstacleType: uint8_t { finish, trap, item, normal };
 
 class Obstacle : public AGLDrawable {
 public:
@@ -22,13 +22,11 @@ public:
         float _scale,
         float& _aspect,
         const glm::vec3& plPos,
-        bool _isTrap,
-        bool isFinishObs = false)
+        ObstacleType obs)
         : AGLDrawable(0)
         , aspect(_aspect)
         , playerPos(plPos)
-        , isFinishObstacle(isFinishObs)
-        , isTrap(_isTrap)
+        , obstacleType(obs)
     {
         setShaders();
         setBuffers();
@@ -36,9 +34,6 @@ public:
         setCenter(_center);
         setAngles(angles.x, angles.y, angles.z);
         setScale(_scale);
-
-        if (isFinishObs)
-            isTrap = false;
 
         calcModelMatrix();
         calcVertices();
@@ -124,12 +119,13 @@ public:
         glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(projection));
         if (not border)
         {
-            if (isFinishObstacle)
+            if (isFinishObstacle())
                 currColor = finishColor;
-            else if (isTrap)
+            else if (isTrap())
                 currColor = trapColor;
-            else
-                currColor = color;
+            else if (isItem())
+                currColor = itemColor;
+            else currColor = color;
         }
         glUniform3f(4, currColor.x, currColor.y, currColor.z);
 
@@ -142,9 +138,13 @@ public:
         return glm::length(center - playerPos);
     }
 
+    bool isFinishObstacle() { return obstacleType == ObstacleType::finish; }
+    bool isTrap() { return obstacleType == ObstacleType::trap; }
+    bool isItem() { return obstacleType == ObstacleType::item; }
 // protected:
     const glm::vec3 trapColor{0.77f, 0.01f, 0.02f};
     const glm::vec3 finishColor{0.1f, 0.7f, 0.1f};
+    const glm::vec3 itemColor{1.0f, 0.83f, 0.0f};
     float scale{1.0/18};
     float x_angle{0.0}, y_angle{0.0}, z_angle{0.0};
     glm::mat4 model;
@@ -159,6 +159,5 @@ public:
     bool isFirstDraw{true};
     float& aspect;
     const glm::vec3& playerPos;
-    const bool isFinishObstacle;
-    bool isTrap{false};
+    ObstacleType obstacleType;
 };

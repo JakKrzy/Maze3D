@@ -18,10 +18,11 @@ class Player : AGLDrawable
     const float scale{1.0f/24};
     const float radius{1.0f};
     bool& gameFinishFlag;
+    uint32_t& itemNumber;
 
 public:
-    Player(GLFWwindow* _win, float& _aspect, bool& gameFinFlag) 
-        : AGLDrawable(0), win(_win), aspect(_aspect), gameFinishFlag(gameFinFlag)
+    Player(GLFWwindow* _win, float& _aspect, bool& gameFinFlag, uint32_t& itemNum) 
+        : AGLDrawable(0), win(_win), aspect(_aspect), gameFinishFlag(gameFinFlag), itemNumber(itemNum)
     {
         setShaders();
         setSphereBuffers();
@@ -77,6 +78,13 @@ public:
             collision = getCollision(obstacles);
             if (collision == CollisionType::coll)
                 cameraPos -= cameraSpeed * cameraTarget;
+            else if (collision == CollisionType::finishColl)
+            {
+                if (itemNumber > 0)
+                    cameraPos -= cameraSpeed * cameraTarget;
+                else
+                    gameFinishFlag = true;
+            }
         }
         else if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
         {
@@ -84,19 +92,29 @@ public:
             collision = getCollision(obstacles);
             if (collision == CollisionType::coll)
                 cameraPos += cameraSpeed * cameraTarget;
+            else if (collision == CollisionType::finishColl)
+            {
+                if (itemNumber > 0)
+                    cameraPos += cameraSpeed * cameraTarget;
+                else
+                    gameFinishFlag = true;
+            }
         }
-        if (collision == CollisionType::finishColl)
-            gameFinishFlag = true;
-        else if (collision == CollisionType::trapColl)
+
+        if (collision == CollisionType::trapColl)
         {
             cameraPos = {-1.0f, -1.0f, -1.0f};
             cameraHorizontalAngle = 45.0f;
             cameraVerticalAngle = 45.0f;
         }
+        else if (collision == CollisionType::itemColl)
+        {
+            itemNumber--;
+        }
         checkOutOfBounds();
     }
 
-    enum class CollisionType: uint8_t { noColl, coll, trapColl, finishColl };
+    enum class CollisionType: uint8_t { noColl, coll, trapColl, finishColl, itemColl };
 
     CollisionType getCollision(std::vector<std::shared_ptr<Obstacle>> obstacles)
     {
@@ -109,9 +127,17 @@ public:
                 auto distance = glm::length(cameraPos - closestPoint);
                 if (distance <= scaledRadius)
                 {
-                    return obstacle->isFinishObstacle 
-                            ? CollisionType::finishColl
-                            : obstacle->isTrap ? CollisionType::trapColl : CollisionType::coll;
+                    if (obstacle->isFinishObstacle())
+                        return CollisionType::finishColl;
+                    else if (obstacle->isTrap())
+                        return CollisionType::trapColl;
+                    else if (obstacle->isItem())
+                    {
+                        obstacle->obstacleType = ObstacleType::normal;
+                        return CollisionType::itemColl;
+                    }
+                    else
+                        return CollisionType::coll;
                 }
             }
         }
