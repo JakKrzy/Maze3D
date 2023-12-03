@@ -122,14 +122,15 @@ public:
             }
 
             if (gameFinishFlag)
+            {
+                gameFinish();
                 break;
+            }
 
             glfwSwapBuffers(win());
             glfwPollEvents();
         } while (glfwGetKey(win(), GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
                  glfwWindowShouldClose(win()) == 0 );
-
-        gameFinish();
     }
 
     void gameFinish()

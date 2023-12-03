@@ -15,7 +15,7 @@ class Player : AGLDrawable
     static constexpr float mouseSensitivity{0.1f};
     std::vector<GLfloat> vertices;
     float& aspect;
-    const float scale{1.0f/20};
+    const float scale{1.0f/24};
     const float radius{1.0f};
     bool& gameFinishFlag;
 
@@ -120,20 +120,20 @@ public:
 
     void checkOutOfBounds()
     {
-        if (cameraPos.x > 1.0f)
-            cameraPos.x = 1.0f;
-        if (cameraPos.x < -1.0f)
-            cameraPos.x = -1.0f;
+        if (cameraPos.x > 0.9f)
+            cameraPos.x = 0.9f;
+        if (cameraPos.x < -0.9f)
+            cameraPos.x = -0.9f;
         
-        if (cameraPos.y > 1.0f)
-            cameraPos.y = 1.0f;
-        if (cameraPos.y < -1.0f)
-            cameraPos.y = -1.0f;
+        if (cameraPos.y > 0.9f)
+            cameraPos.y = 0.9f;
+        if (cameraPos.y < -0.9f)
+            cameraPos.y = -0.9f;
         
-        if (cameraPos.z > 1.0f)
-            cameraPos.z = 1.0f;
-        if (cameraPos.z < -1.0f)
-            cameraPos.z = -1.0f;
+        if (cameraPos.z > 0.9f)
+            cameraPos.z = 0.9f;
+        if (cameraPos.z < -0.9f)
+            cameraPos.z = -0.9f;
     }
 
     static void mouseCallback(GLFWwindow* win, double xpos, double ypos)

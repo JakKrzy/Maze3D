@@ -12,6 +12,8 @@
 
 using Triangle = std::array<glm::vec3, 3>;
 
+enum class 
+
 class Obstacle : public AGLDrawable {
 public:
     Obstacle(
