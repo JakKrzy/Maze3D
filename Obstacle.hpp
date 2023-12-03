@@ -14,14 +14,29 @@ using Triangle = std::array<glm::vec3, 3>;
 
 class Obstacle : public AGLDrawable {
 public:
-    Obstacle(glm::vec3 _center, glm::vec3 angles, float& _aspect, const glm::vec3& plPos)
-        : AGLDrawable(0), aspect(_aspect), playerPos(plPos)
+    Obstacle(
+        glm::vec3 _center,
+        glm::vec3 angles,
+        float _scale,
+        float& _aspect,
+        const glm::vec3& plPos,
+        bool _isTrap,
+        bool isFinishObs = false)
+        : AGLDrawable(0)
+        , aspect(_aspect)
+        , playerPos(plPos)
+        , isFinishObstacle(isFinishObs)
+        , isTrap(_isTrap)
     {
         setShaders();
         setBuffers();
 
         setCenter(_center);
         setAngles(angles.x, angles.y, angles.z);
+        setScale(_scale);
+
+        if (isFinishObs)
+            isTrap = false;
 
         calcModelMatrix();
         calcVertices();
@@ -38,7 +53,6 @@ public:
     {
         center = _center;
         color = {0.4*center.x+0.6, 0.01*center.y, 0.5*center.z+0.7};
-
     }
 
     void calcModelMatrix()
@@ -67,7 +81,8 @@ public:
             triangles[i][2] = vertices[(i + 2) % 4];
         }
     }
-    // void setScale(const int gridSize) { scale = 1.0 / (1.2 * gridSize); }
+
+    void setScale(const float s) { scale = s; }
 
     void setShaders() { compileShadersFromFile("Obstacle.vesh", "Obstacle.frsh"); }
     
@@ -105,7 +120,15 @@ public:
         glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(projection));
-        if (not border) { currColor = color; }
+        if (not border)
+        {
+            if (isFinishObstacle)
+                currColor = finishColor;
+            else if (isTrap)
+                currColor = trapColor;
+            else
+                currColor = color;
+        }
         glUniform3f(4, currColor.x, currColor.y, currColor.z);
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
@@ -118,7 +141,8 @@ public:
     }
 
 // protected:
-
+    const glm::vec3 trapColor{0.77f, 0.01f, 0.02f};
+    const glm::vec3 finishColor{0.1f, 0.7f, 0.1f};
     float scale{1.0/18};
     float x_angle{0.0}, y_angle{0.0}, z_angle{0.0};
     glm::mat4 model;
@@ -133,4 +157,6 @@ public:
     bool isFirstDraw{true};
     float& aspect;
     const glm::vec3& playerPos;
+    const bool isFinishObstacle;
+    bool isTrap{false};
 };

@@ -19,9 +19,13 @@ public:
         srand(seed);
         ViewportOne(0, 0, wd, ht);
         glfwSetWindowSizeCallback(win(), MyWin::windowSizeCallback);
-        glfwSetInputMode(win(), GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        glfwSetInputMode(win(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-        Player player(win(), aspect);
+        float scale = 1.0f / (2 * (float)N);
+
+        bool gameFinishFlag{false};
+
+        Player player(win(), aspect, gameFinishFlag);
         glfwSetCursorPosCallback(win(), Player::mouseCallback);
 
         std::vector<std::shared_ptr<Obstacle>> obstacles;
@@ -39,11 +43,16 @@ public:
                 {
                     if (not (x_index == 0 and y_index == 0 and z_index == 0))
                     {
+                        auto isFinish = x_index == N-1 and y_index == N-1 and z_index == N-1;
+                        auto isTrap = (rand() % 100) < 15;
                         auto o = std::make_shared<Obstacle>(
                             glm::vec3(curr_x, curr_y, curr_z),
                             glm::vec3(rand() % 360, rand() % 360, rand() % 360),
+                            scale,
                             aspect,
-                            player.cameraPos);
+                            player.cameraPos,
+                            isTrap,
+                            isFinish);
                         obstacles.push_back(o);
                     }
                     curr_z += diff;
@@ -57,7 +66,7 @@ public:
         glm::vec3 minimapCameraPos{-3.0, -3.0, -3.0};
 
         auto getClosestObstacles = [&obstacles](){
-            constexpr int numOfObstacles{9};
+            const int numOfObstacles{obstacles.size() < 9 ? obstacles.size() : 9};
             std::sort(
                 obstacles.begin(),
                 obstacles.end(),
@@ -112,10 +121,15 @@ public:
                 player.draw(minimapView);
             }
 
+            if (gameFinishFlag)
+                break;
+
             glfwSwapBuffers(win());
             glfwPollEvents();
         } while (glfwGetKey(win(), GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
                  glfwWindowShouldClose(win()) == 0 );
+
+        gameFinish();
     }
 
     void gameFinish()
@@ -130,6 +144,7 @@ public:
             std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime) -
             std::chrono::milliseconds(timeMinutes.count()*60000) -
             std::chrono::milliseconds(timeSeconds.count()*1000)};
+        printf("You win!\n");
         printf("Your time (m:s:ms): %ld:%ld:%ld\n", timeMinutes.count(), timeSeconds.count(), timeMilliseconds.count());
     }
 

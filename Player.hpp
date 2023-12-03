@@ -5,7 +5,7 @@
 #include "Obstacle.hpp"
 #include "ClosestPointTriangle.hpp"
 
-float lastMouseX, lastMouseY, cameraVerticalAngle{0.0f}, cameraHorizontalAngle{0.0f};
+float lastMouseX, lastMouseY, cameraVerticalAngle{45.0f}, cameraHorizontalAngle{45.0f};
 bool mouseFirstMove{true};
 
 class Player : AGLDrawable
@@ -15,11 +15,13 @@ class Player : AGLDrawable
     static constexpr float mouseSensitivity{0.1f};
     std::vector<GLfloat> vertices;
     float& aspect;
-    const float scale{1.0f/18};
+    const float scale{1.0f/20};
     const float radius{1.0f};
+    bool& gameFinishFlag;
 
 public:
-    Player(GLFWwindow* _win, float& _aspect) : AGLDrawable(0), win(_win), aspect(_aspect)
+    Player(GLFWwindow* _win, float& _aspect, bool& gameFinFlag) 
+        : AGLDrawable(0), win(_win), aspect(_aspect), gameFinishFlag(gameFinFlag)
     {
         setShaders();
         setSphereBuffers();
@@ -68,22 +70,35 @@ public:
         deltaTime = currentFrame - lastFrameTime;
         lastFrameTime = currentFrame;
         const float cameraSpeed = 0.8f * deltaTime;
+        CollisionType collision;
         if (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS)
         {
             cameraPos += cameraSpeed * cameraTarget;
-            if (isCollision(obstacles))
+            collision = getCollision(obstacles);
+            if (collision == CollisionType::coll)
                 cameraPos -= cameraSpeed * cameraTarget;
         }
-        if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
+        else if (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS)
         {
             cameraPos -= cameraSpeed * cameraTarget;
-            if (isCollision(obstacles))
+            collision = getCollision(obstacles);
+            if (collision == CollisionType::coll)
                 cameraPos += cameraSpeed * cameraTarget;
+        }
+        if (collision == CollisionType::finishColl)
+            gameFinishFlag = true;
+        else if (collision == CollisionType::trapColl)
+        {
+            cameraPos = {-1.0f, -1.0f, -1.0f};
+            cameraHorizontalAngle = 45.0f;
+            cameraVerticalAngle = 45.0f;
         }
         checkOutOfBounds();
     }
 
-    bool isCollision(std::vector<std::shared_ptr<Obstacle>> obstacles)
+    enum class CollisionType: uint8_t { noColl, coll, trapColl, finishColl };
+
+    CollisionType getCollision(std::vector<std::shared_ptr<Obstacle>> obstacles)
     {
         auto scaledRadius = scale * radius;
         for (auto& obstacle : obstacles)
@@ -94,11 +109,13 @@ public:
                 auto distance = glm::length(cameraPos - closestPoint);
                 if (distance <= scaledRadius)
                 {
-                    return true;
+                    return obstacle->isFinishObstacle 
+                            ? CollisionType::finishColl
+                            : obstacle->isTrap ? CollisionType::trapColl : CollisionType::coll;
                 }
             }
         }
-        return false;
+        return CollisionType::noColl;
     }
 
     void checkOutOfBounds()
@@ -142,33 +159,11 @@ public:
     }
 
     void setShaders() { compileShadersFromFile("Player.vesh", "Player.frsh"); }
-    void setBuffers()
-    {
-        bindBuffers();
-        GLfloat vert[6][3]{
-            {-1, -1, -1},
-            {-1, 1, 1},
-            { 1, 1, -1},
-            {1, -1, 1},
-            {-1, -1, -1},
-            {-1, 1, 1}};
-
-        glBufferData(GL_ARRAY_BUFFER, 6*3*sizeof(float), vert, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(
-            0,                  // attribute 0, must match the layout in the shader.
-            3,                  // size
-            GL_FLOAT,           // type
-            GL_FALSE,           // normalized?
-            0,//24,             // stride
-            (void*)0);          // array buffer offset
-    }
 
     void draw(glm::mat4 view)
     {
         bindProgram();
         bindBuffers();
-
 
         auto model = glm::mat4(1.0f);
         model = glm::translate(model, cameraPos);
