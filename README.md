@@ -1,5 +1,7 @@
 
 # Maze3D
+**Not all files are prepared by me.**
+**AGL3Drawable.hpp, AGL3Window.cpp, AGL3Window.hpp, ClosestPointTriangle.cpp are not mine.**
 
 The goal of the game is to collect all golden tetrahedrons and to get to the green tetrahedron.
 Red tetrahedrons should be avoided as if the player thouches them they get sent to the beginning.
