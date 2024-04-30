@@ -11,12 +11,5 @@ out vec4 vcolor;
 
 void main(void) {
     gl_Position = projection * view * model * vec4(pos, 1.0);
-
-    const vec4 colors[] = vec4[6](vec4(1.0, 0.85, 0.0, 1.0),
-                                  vec4(1.0, 0.85, 0.0, 1.0),
-                                  vec4(1.0, 0.0,  0.0, 1.0),
-                                  vec4(1.0, 0.0, 0.0, 1.0),
-                                  vec4(0.0, 1.0, 0.0, 1.0),
-                                  vec4(0.0, 0.0, 1.0, 1.0));
-    vcolor = colors[gl_VertexID % 6];
+    vcolor = vec4(1.0, 1.0, 1.0, 1.0);
 }

@@ -133,15 +133,14 @@ public:
         AGLErrors("Obstacle-draw");
     }
 
-    float getDistanceFromPlayer()
-    {
-        return glm::length(center - playerPos);
-    }
+    float getDistanceFromPlayer() const { return glm::length(center - playerPos); }
+    bool isFinishObstacle() const { return obstacleType == ObstacleType::finish; }
+    bool isTrap() const { return obstacleType == ObstacleType::trap; }
+    bool isItem() const { return obstacleType == ObstacleType::item; }
+    void setObstacleType(ObstacleType ot) { obstacleType = ot; }
+    std::array<Triangle, 4>& getTriangles() { return triangles; }
 
-    bool isFinishObstacle() { return obstacleType == ObstacleType::finish; }
-    bool isTrap() { return obstacleType == ObstacleType::trap; }
-    bool isItem() { return obstacleType == ObstacleType::item; }
-// protected:
+private:
     const glm::vec3 trapColor{0.77f, 0.01f, 0.02f};
     const glm::vec3 finishColor{0.1f, 0.7f, 0.1f};
     const glm::vec3 itemColor{1.0f, 0.83f, 0.0f};

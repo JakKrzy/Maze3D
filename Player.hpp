@@ -10,16 +10,6 @@ bool mouseFirstMove{true};
 
 class Player : AGLDrawable
 {
-    GLFWwindow* win;
-    float deltaTime{0.0f}, lastFrameTime{0.0f};
-    static constexpr float mouseSensitivity{0.1f};
-    std::vector<GLfloat> vertices;
-    float& aspect;
-    const float scale{1.0f/24};
-    const float radius{1.0f};
-    bool& gameFinishFlag;
-    uint32_t& itemNumber;
-
 public:
     Player(GLFWwindow* _win, float& _aspect, bool& gameFinFlag, uint32_t& itemNum) 
         : AGLDrawable(0), win(_win), aspect(_aspect), gameFinishFlag(gameFinFlag), itemNumber(itemNum)
@@ -27,10 +17,6 @@ public:
         setShaders();
         setSphereBuffers();
     }
-    glm::vec3 cameraPos{-1.0f, -1.0f, -1.0f};
-    glm::vec3 cameraTarget{0.0f, 0.0f, -1.0f};
-    const float cameraTargetRadius{3.0f};
-    const glm::vec3 up{0.0f, 1.0f, 0.0f};
 
     inline glm::vec3 getCenter() const { return cameraPos; } 
 
@@ -110,6 +96,7 @@ public:
         else if (collision == CollisionType::itemColl)
         {
             itemNumber--;
+            printf("%d items left to collect!\n", itemNumber);
         }
         checkOutOfBounds();
     }
@@ -121,7 +108,7 @@ public:
         auto scaledRadius = scale * radius;
         for (auto& obstacle : obstacles)
         {
-            for (auto& triangle : obstacle->triangles)
+            for (auto& triangle : obstacle->getTriangles())
             {
                 auto closestPoint = closestPointTriangle(cameraPos, triangle[0], triangle[1], triangle[2]);
                 auto distance = glm::length(cameraPos - closestPoint);
@@ -133,7 +120,7 @@ public:
                         return CollisionType::trapColl;
                     else if (obstacle->isItem())
                     {
-                        obstacle->obstacleType = ObstacleType::normal;
+                        obstacle->setObstacleType(ObstacleType::normal);
                         return CollisionType::itemColl;
                     }
                     else
@@ -212,7 +199,7 @@ public:
     void setSphereBuffers()
     {
         bindBuffers();
-        const int sectorCount{24}, stackCount{16};
+        const int sectorCount{8}, stackCount{8};
         std::vector<GLfloat> sphereVerts;
         
         float x, y, z, xy;                              // vertex position
@@ -311,6 +298,20 @@ public:
             GL_FALSE,           // normalized?
             0,//24,             // stride
             (void*)0);          // array buffer offset
-
     }
+
+    glm::vec3 cameraPos{-1.0f, -1.0f, -1.0f};
+    glm::vec3 cameraTarget{0.0f, 0.0f, -1.0f};
+    const float cameraTargetRadius{3.0f};
+    const glm::vec3 up{0.0f, 1.0f, 0.0f};
+private:
+    GLFWwindow* win;
+    float deltaTime{0.0f}, lastFrameTime{0.0f};
+    static constexpr float mouseSensitivity{0.1f};
+    std::vector<GLfloat> vertices;
+    float& aspect;
+    const float scale{1.0f/24};
+    const float radius{1.0f};
+    bool& gameFinishFlag;
+    uint32_t& itemNumber;
 };

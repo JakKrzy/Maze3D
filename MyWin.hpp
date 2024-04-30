@@ -50,9 +50,9 @@ public:
                         else
                         {
                             auto randomNum = rand() % 100;
-                            if (randomNum < 15)
+                            if (randomNum < 10)
                                 obstacleType = ObstacleType::trap;
-                            else if (randomNum < 30)
+                            else if (randomNum < 12)
                             {
                                 obstacleType = ObstacleType::item;
                                 itemNumber++;
@@ -80,7 +80,7 @@ public:
         glm::vec3 minimapCameraPos{-3.0, -3.0, -3.0};
 
         auto getClosestObstacles = [&obstacles](){
-            const int numOfObstacles{obstacles.size() < 9 ? obstacles.size() : 9};
+            const int numOfObstacles{obstacles.size() < 4 ? obstacles.size() : 4};
             std::sort(
                 obstacles.begin(),
                 obstacles.end(),
@@ -92,6 +92,8 @@ public:
                 res.push_back(obstacles[i]);
             return res;
         };
+
+        printf("To win you have to collect %d items\n", itemNumber);
 
         do {
             glEnable(GL_DEPTH_TEST);
@@ -116,7 +118,6 @@ public:
             auto p = player.getCenter();
             minimapCameraPos = {
                 p.x > 0.0f ? 3.0f : -3.0f,
-                // p.y > 0.0f ? 3.0f : -3.0f,
                 3.0f,
                 p.z > 0.0f ? 3.0f : -3.0f};
 
@@ -124,16 +125,16 @@ public:
                 minimapCameraPos,
                 glm::vec3{0.0f, 0.0f, 0.0f},
                 glm::vec3{0.0f, 1.0f, 0.0f});
-            glViewport(2*(wd/3), 0, wd/3, ht/3);
+            glViewport((wd/2), 0, wd/2, ht/2);
             glClear(GL_DEPTH_BUFFER_BIT);
             glLineWidth(0.7f);
             for (auto& o : obstacles)
             {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                 o->draw(minimapView);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                player.draw(minimapView);
             }
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            player.draw(minimapView);
 
             if (gameFinishFlag)
             {
